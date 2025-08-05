@@ -1,0 +1,3127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCM Blurb 提报</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 可爱猫猫背景图案 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(255, 182, 193, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(173, 216, 230, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(255, 218, 185, 0.1) 0%, transparent 50%);
+            background-size: 400px 400px, 300px 300px, 500px 500px;
+            background-position: 0 0, 100px 100px, 200px 50px;
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: -2;
+        }
+
+        /* 猫猫图案 */
+        body::after {
+            content: '🐱 😸 😺 🐾 🐱 😻 😸 🐾 😺 🐱 😸 😻 🐾 😺 🐱 😸 😻 🐾 😺 🐱 😸 😺 🐾 🐱 😻 😸 🐾 😺 🐱 😸 😻 🐾 😺 🐱';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            font-size: 28px;
+            line-height: 100px;
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 0;
+            animation: drift 30s linear infinite;
+            word-spacing: 80px;
+            letter-spacing: 60px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(1deg); }
+            66% { transform: translateY(-10px) rotate(-1deg); }
+        }
+
+        @keyframes drift {
+            0% { transform: translateX(-50%) translateY(-50%); }
+            100% { transform: translateX(-60%) translateY(-60%); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-tab:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .nav-tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+            background: white;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 日历样式 */
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .calendar-header {
+            background: #495057;
+            color: white;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .calendar-day {
+            background: white;
+            min-height: 120px;
+            padding: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .calendar-day:hover {
+            background: #f8f9fa;
+            border-color: #007bff;
+        }
+
+        .calendar-day.other-month {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .calendar-day.today {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .calendar-day.clickable {
+            cursor: pointer;
+        }
+
+        .calendar-day.clickable:hover {
+            background: #e8f5e8;
+            border-color: #28a745;
+        }
+
+        .day-number {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .event {
+            background: #007bff;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .event.ssr { background: #28a745; }
+        .event.msr { background: #ffc107; color: #333; }
+        .event.na { background: #17a2b8; }
+        .event.eu { background: #6f42c1; }
+        .event.jp { background: #fd7e14; }
+        .event.all { background: #dc3545; }
+
+        /* 待审核事件样式 */
+        .event.pending-event {
+            background: #9e9e9e !important;
+            color: white;
+            opacity: 0.8;
+            border: 1px dashed #757575;
+        }
+
+        .event.pending-event:hover {
+            opacity: 1;
+            transform: scale(1.02);
+        }
+
+        /* 内容数量指示器 */
+        .content-count-indicator {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #17a2b8;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 1;
+        }
+
+        .calendar-day {
+            position: relative;
+        }
+
+        /* 图例样式 */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+            padding: 15px;
+            background: rgba(248, 249, 250, 0.8);
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .legend-item:hover {
+            background: rgba(0,0,0,0.05);
+            transform: translateY(-1px);
+        }
+
+        .legend-item.active {
+            background: rgba(0,123,255,0.1);
+            border-color: #007bff;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-color.ssr { background: #28a745; }
+        .legend-color.msr { background: #ffc107; }
+        .legend-color.na { background: #17a2b8; }
+        .legend-color.eu { background: #6f42c1; }
+        .legend-color.jp { background: #fd7e14; }
+        .legend-color.pending { background: #6c757d; }
+        .legend-color.all { background: #dc3545; }
+
+        .calendar-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #1e7e34; }
+
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .close:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        /* 图片预览样式 */
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #dee2e6;
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-info {
+            margin-top: 5px;
+        }
+
+        .file-info small {
+            color: #6c757d;
+        }
+
+        /* AI优化模块样式 */
+        .ai-optimizer {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f4fd 100%);
+            border: 2px solid #e3f2fd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .ai-icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        .ai-header label {
+            font-weight: 600;
+            color: #1976d2;
+            margin: 0;
+        }
+
+        .ai-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .ai-btn {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .ai-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .ai-btn:active {
+            transform: translateY(0);
+        }
+
+        .ai-suggestions {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .suggestion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-suggestions {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .close-suggestions:hover {
+            background: #f5f5f5;
+        }
+
+        .suggestion-content {
+            background: #f8f9fa;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-style: italic;
+            line-height: 1.5;
+        }
+
+        .suggestion-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-apply {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-apply:hover {
+            background: #45a049;
+        }
+
+        .btn-regenerate {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-regenerate:hover {
+            background: #f57c00;
+        }
+
+        /* 动画效果 */
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* 请求项样式 */
+        .request-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .request-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .request-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        /* 审核记录样式 */
+        .stats-summary {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .record-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .record-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .record-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .record-status.approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .record-status.rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .record-status.deleted {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .record-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .record-content {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            line-height: 1.5;
+            border-left: 4px solid #007bff;
+        }
+
+        .copy-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        /* 审核记录样式 */
+        .stats-summary {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .record-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .record-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .record-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .record-status.approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .record-status.rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .record-status.deleted {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .record-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .record-content {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            line-height: 1.5;
+            border-left: 4px solid #007bff;
+        }
+
+        .copy-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+        }
+
+        .copy-btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav-tab {
+                padding: 12px 10px;
+                font-size: 14px;
+            }
+
+            .tab-content {
+                padding: 20px;
+            }
+
+            .calendar-day {
+                min-height: 80px;
+                padding: 5px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .form-row .form-group {
+                margin-bottom: 20px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 2% auto;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+
+            .legend {
+                gap: 10px;
+            }
+
+            .legend-item {
+                padding: 6px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>OCM Blurb 提报</h1>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('calendar')">发送日历</button>
+            <button class="nav-tab" onclick="showTab('admin')">管理员审核</button>
+            <button class="nav-tab" onclick="showTab('records')">审核记录</button>
+        </div>
+
+        <!-- 发送日历页面 -->
+        <div id="calendar" class="tab-content active">
+            <h2 style="color: #333; font-size: 1.8rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center;">OCM Blurb 日历</h2>
+            <p style="text-align: center; color: #6c757d; margin-bottom: 20px;">📅 点击日期提交新的Blurb需求</p>
+            
+            <div class="legend">
+                <div class="legend-item" onclick="filterCalendar('all')" data-filter="all">
+                    <div class="legend-color all"></div>
+                    <span>全部</span>
+                </div>
+                <div class="legend-item" onclick="filterCalendar('na')" data-filter="na">
+                    <div class="legend-color na"></div>
+                    <span>NA</span>
+                </div>
+                <div class="legend-item" onclick="filterCalendar('eu')" data-filter="eu">
+                    <div class="legend-color eu"></div>
+                    <span>EU</span>
+                </div>
+                <div class="legend-item" onclick="filterCalendar('jp')" data-filter="jp">
+                    <div class="legend-color jp"></div>
+                    <span>JP</span>
+                </div>
+                <div class="legend-item" onclick="filterCalendar('ssr')" data-filter="ssr">
+                    <div class="legend-color ssr"></div>
+                    <span>SSR</span>
+                </div>
+                <div class="legend-item" onclick="filterCalendar('msr')" data-filter="msr">
+                    <div class="legend-color msr"></div>
+                    <span>MSR</span>
+                </div>
+                <div class="legend-item" style="pointer-events: none; opacity: 0.8;">
+                    <div class="legend-color pending"></div>
+                    <span>待审核</span>
+                </div>
+            </div>
+
+            <div class="calendar-controls">
+                <button class="btn" onclick="previousMonth()">← 上个月</button>
+                <span id="currentMonth" style="margin: 0 20px; font-weight: 600; font-size: 18px;"></span>
+                <button class="btn" onclick="nextMonth()">下个月 →</button>
+            </div>
+
+            <div class="calendar" id="calendarGrid"></div>
+        </div>
+
+        <!-- 管理员审核页面 -->
+        <div id="admin" class="tab-content">
+            <h2 style="color: #333; font-size: 1.8rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center;">待审核需求</h2>
+            <div id="pendingRequests">
+                <!-- 待审核请求将在这里显示 -->
+            </div>
+        </div>
+
+        <!-- 审核记录页面 -->
+        <div id="records" class="tab-content">
+            <h2 style="color: #333; font-size: 1.8rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center;">审核记录</h2>
+            <div class="records-filter">
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label>ID搜索：</label>
+                        <input type="text" id="idSearch" placeholder="输入请求ID" 
+                               style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; width: 150px;"
+                               oninput="filterRecords()">
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label>邮箱搜索：</label>
+                        <input type="text" id="emailSearch" placeholder="输入邮箱地址" 
+                               style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; width: 200px;"
+                               oninput="filterRecords()">
+                    </div>
+                    <button class="btn" onclick="clearSearch()" style="padding: 8px 12px;">清除</button>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label>筛选状态：</label>
+                        <select id="statusFilter" onchange="filterRecords()">
+                            <option value="all">全部</option>
+                            <option value="approved">已通过</option>
+                            <option value="rejected">已拒绝</option>
+                            <option value="pending">待审核</option>
+                            <option value="deleted">已删除</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label>筛选ARC：</label>
+                        <select id="arcFilter" onchange="filterRecords()">
+                            <option value="all">全部</option>
+                            <option value="ALL">ALL</option>
+                            <option value="NA">NA</option>
+                            <option value="EU">EU</option>
+                            <option value="JP">JP</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label>筛选Cohort：</label>
+                        <select id="cohortFilter" onchange="filterRecords()">
+                            <option value="all">全部</option>
+                            <option value="ALL">ALL</option>
+                            <option value="SSR">SSR</option>
+                            <option value="MSR">MSR</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="exportRecords()">📊 导出记录</button>
+                </div>
+            </div>
+            <div id="recordsList">
+                <!-- 审核记录将在这里显示 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 提交需求模态框 -->
+    <div id="submitModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>提交新需求</h3>
+                <button class="close" onclick="closeSubmitModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="requestForm">
+                    <div class="form-group">
+                        <label for="content">发送内容 *</label>
+                        <textarea id="content" name="content" placeholder="请输入需要发送的内容..." required></textarea>
+                    </div>
+
+                    <!-- AI优化BLURB模块 -->
+                    <div class="form-group">
+                        <div class="ai-optimizer">
+                            <div class="ai-header">
+                                <span class="ai-icon">🤖</span>
+                                <label>Claude AI内容优化助手</label>
+                                <small style="color: #6c757d; margin-left: 10px;">让你的BLURB更吸引人</small>
+                                <div style="font-size: 11px; color: #999; margin-top: 2px;">
+                                    <span id="apiStatus">🔧 需要配置Claude API密钥</span>
+                                </div>
+                            </div>
+                            
+                            <div class="ai-options">
+                                <button type="button" class="ai-btn" onclick="optimizeContent('emoji')" title="添加相关Emoji表情">
+                                    😊 添加Emoji
+                                </button>
+                                <button type="button" class="ai-btn" onclick="optimizeContent('engaging')" title="让内容更有吸引力">
+                                    ✨ 增强吸引力
+                                </button>
+                                <button type="button" class="ai-btn" onclick="optimizeContent('professional')" title="让内容更专业">
+                                    💼 专业化
+                                </button>
+                                <button type="button" class="ai-btn" onclick="optimizeContent('concise')" title="让内容更简洁">
+                                    📝 精简内容
+                                </button>
+                            </div>
+                            
+                            <div id="aiSuggestions" class="ai-suggestions" style="display: none;">
+                                <div class="suggestion-header">
+                                    <span>💡 AI建议</span>
+                                    <button type="button" class="close-suggestions" onclick="closeSuggestions()">×</button>
+                                </div>
+                                <div id="suggestionContent" class="suggestion-content"></div>
+                                <div class="suggestion-actions">
+                                    <button type="button" class="btn-apply" onclick="applySuggestion()">✅ 应用建议</button>
+                                    <button type="button" class="btn-regenerate" onclick="regenerateSuggestion()">🔄 重新生成</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="images">上传图片</label>
+                        <input type="file" id="images" name="images" multiple accept="image/*" onchange="previewImages(this)">
+                        <div class="file-info">
+                            <small>支持 JPG, PNG, GIF 格式，单个文件最大 5MB，最多上传 5 张图片</small>
+                        </div>
+                        <div id="imagePreview" class="image-preview"></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="arc">ARC *</label>
+                            <select id="arc" name="arc" required>
+                                <option value="">请选择ARC</option>
+                                <option value="ALL">ALL</option>
+                                <option value="NA">NA</option>
+                                <option value="EU">EU</option>
+                                <option value="JP">JP</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cohort">Seller Cohort *</label>
+                            <select id="cohort" name="cohort" required>
+                                <option value="">请选择Seller Cohort</option>
+                                <option value="ALL">ALL</option>
+                                <option value="SSR">SSR</option>
+                                <option value="MSR">MSR</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sendDate">发送日期 *</label>
+                        <input type="date" id="sendDate" name="sendDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="recurrence">循环设置</label>
+                        <select id="recurrence" name="recurrence">
+                            <option value="none">不循环</option>
+                            <option value="weekly">每周循环</option>
+                            <option value="monthly">每月循环</option>
+                        </select>
+                    </div>
+
+                    <div id="recurrenceDetails" class="form-group" style="display: none;">
+                        <label for="recurrenceEnd">循环结束日期</label>
+                        <input type="date" id="recurrenceEnd" name="recurrenceEnd">
+                        <small style="display: block; margin-top: 5px; color: #6c757d;">
+                            留空表示无限循环
+                        </small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="submitter">提交人 *</label>
+                            <input type="text" id="submitter" name="submitter" placeholder="请输入您的姓名" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="teamDomain">Team/Domain</label>
+                            <input type="text" id="teamDomain" name="teamDomain" placeholder="请输入您的团队/领域">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">邮箱 *</label>
+                        <input type="email" id="email" name="email" placeholder="请输入您的邮箱地址" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">备注</label>
+                        <textarea id="notes" name="notes" placeholder="请输入备注信息（可选）" rows="3"></textarea>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 30px;">
+                        <button type="button" class="btn" onclick="closeSubmitModal()" style="background: #6c757d; margin-right: 10px;">取消</button>
+                        <button type="submit" class="btn btn-success">提交需求</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 事件详情模态框 -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>发送任务详情</h3>
+                <button class="close" onclick="closeEventModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="eventDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成功提示模态框 -->
+    <div id="successModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                <h3>提交成功</h3>
+                <button class="close" onclick="closeSuccessModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: center; padding: 40px;">
+                <div style="font-size: 4rem; color: #28a745; margin-bottom: 20px;">✅</div>
+                <h4 style="color: #333; margin-bottom: 15px;">需求提交成功！</h4>
+                <p style="color: #6c757d; margin-bottom: 20px;">管理员将尽快审核您的请求</p>
+                <p style="font-size: 14px; color: #6c757d;">提交时间：<span id="submitTime"></span></p>
+                <button class="btn btn-success" onclick="closeSuccessModal()" style="margin-top: 20px;">确定</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // 全局变量
+        let currentDate = new Date();
+        let requests = JSON.parse(localStorage.getItem('massRequests') || '[]');
+        let approvedEvents = JSON.parse(localStorage.getItem('approvedEvents') || '[]');
+        let selectedImages = [];
+        let currentFilter = 'all';
+        let currentSuggestion = '';
+        let currentOptimizationType = '';
+        let selectedDate = null;
+
+        // 检查指定日期的内容数量限制
+        function checkDateContentLimit(dateStr, arc, cohort) {
+            console.log(`检查日期限制: ${dateStr}, ARC: ${arc}, Cohort: ${cohort}`);
+            
+            // 获取该日期的所有已批准的内容
+            const approvedCount = approvedEvents.filter(event => {
+                const matchDate = event.date === dateStr;
+                const matchArc = (event.arc === arc || event.arc === 'ALL' || arc === 'ALL');
+                const matchCohort = (event.cohort === cohort || event.cohort === 'ALL' || cohort === 'ALL');
+                const match = matchDate && matchArc && matchCohort;
+                
+                if (match) {
+                    console.log(`已批准匹配: ${event.title}, 日期: ${event.date}, ARC: ${event.arc}, Cohort: ${event.cohort}`);
+                }
+                return match;
+            }).length;
+            
+            // 获取该日期的所有待审核的内容
+            const pendingCount = requests.filter(req => {
+                const matchDate = req.sendDate === dateStr;
+                const matchStatus = req.status === 'pending';
+                const matchArc = (req.arc === arc || req.arc === 'ALL' || arc === 'ALL');
+                const matchCohort = (req.cohort === cohort || req.cohort === 'ALL' || cohort === 'ALL');
+                const match = matchDate && matchStatus && matchArc && matchCohort;
+                
+                if (match) {
+                    console.log(`待审核匹配: ${req.content.substring(0, 30)}..., 日期: ${req.sendDate}, ARC: ${req.arc}, Cohort: ${req.cohort}`);
+                }
+                return match;
+            }).length;
+            
+            const totalCount = approvedCount + pendingCount;
+            console.log(`总计数量: ${totalCount} (已批准: ${approvedCount}, 待审核: ${pendingCount})`);
+            
+            return totalCount;
+        }
+
+        // 检查日期是否可以添加新内容
+        function canAddContentToDate(dateStr, arc, cohort) {
+            const currentCount = checkDateContentLimit(dateStr, arc, cohort);
+            const canAdd = currentCount < 2;
+            console.log(`可以添加内容: ${canAdd} (当前: ${currentCount}/2)`);
+            return canAdd;
+        }
+
+        // 获取日期内容详情（用于提示信息）
+        function getDateContentDetails(dateStr, arc, cohort) {
+            const approvedItems = approvedEvents.filter(event => 
+                event.date === dateStr && 
+                (event.arc === arc || event.arc === 'ALL' || arc === 'ALL') &&
+                (event.cohort === cohort || event.cohort === 'ALL' || cohort === 'ALL')
+            );
+            
+            const pendingItems = requests.filter(req => 
+                req.sendDate === dateStr && 
+                req.status === 'pending' &&
+                (req.arc === arc || req.arc === 'ALL' || arc === 'ALL') &&
+                (req.cohort === cohort || req.cohort === 'ALL' || cohort === 'ALL')
+            );
+            
+            return {
+                approved: approvedItems,
+                pending: pendingItems,
+                total: approvedItems.length + pendingItems.length
+            };
+        }
+
+        // 显示日期内容限制警告
+        function showDateLimitWarning(dateStr, arc, cohort, details) {
+            const targetText = `${arc}-${cohort}`;
+            const existingContent = [];
+            
+            details.approved.forEach(item => {
+                existingContent.push(`• ${item.title} (已批准)`);
+            });
+            
+            details.pending.forEach(item => {
+                existingContent.push(`• ${item.arc}-${item.cohort}: ${item.content.substring(0, 30)}... (待审核)`);
+            });
+            
+            const message = `
+                <div style="text-align: left;">
+                    <h4 style="color: #dc3545; margin-bottom: 15px;">⚠️ 该日期发送内容已到达上限</h4>
+                    <p><strong>日期：</strong> ${dateStr}</p>
+                    <p><strong>目标：</strong> ${targetText}</p>
+                    <p><strong>当前内容数量：</strong> ${details.total}/2</p>
+                    <div style="margin: 15px 0;">
+                        <strong>已有内容：</strong>
+                        <div style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 4px; font-size: 14px;">
+                            ${existingContent.join('<br>')}
+                        </div>
+                    </div>
+                    <p style="color: #dc3545; font-weight: 600;">请选择其他日期或修改ARC/Cohort设置。</p>
+                </div>
+            `;
+            
+            showCustomModal('日期内容限制提醒', message);
+        }
+
+        // 显示自定义模态框
+        function showCustomModal(title, content) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); z-index: 10001; display: flex;
+                align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 15px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                    <div style="background: linear-gradient(135deg, #dc3545, #c82333); color: white; padding: 20px; border-radius: 15px 15px 0 0;">
+                        <h3 style="margin: 0; font-size: 1.3rem;">${title}</h3>
+                    </div>
+                    <div style="padding: 25px;">
+                        ${content}
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button onclick="this.closest('.custom-modal').remove()" 
+                                    style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                我知道了
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.className = 'custom-modal';
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
+            
+            document.body.appendChild(modal);
+        }
+
+        // Claude API配置
+        const CLAUDE_API_CONFIG = {
+            apiKey: 'YOUR_CLAUDE_API_KEY', // 需要替换为实际的API密钥
+            apiUrl: 'https://api.anthropic.com/v1/messages',
+            model: 'claude-3-haiku-20240307', // 使用性价比高的Haiku模型
+            maxTokens: 1000
+        };
+
+        // Claude API调用函数
+        async function callClaudeAPI(prompt) {
+            try {
+                const response = await fetch(CLAUDE_API_CONFIG.apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': CLAUDE_API_CONFIG.apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: CLAUDE_API_CONFIG.model,
+                        max_tokens: CLAUDE_API_CONFIG.maxTokens,
+                        messages: [{
+                            role: 'user',
+                            content: prompt
+                        }]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Claude API错误: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                return data.content[0].text;
+            } catch (error) {
+                console.error('Claude API调用失败:', error);
+                // 如果API调用失败，回退到本地规则
+                return null;
+            }
+        }
+
+        // 生成Claude提示词
+        function generateClaudePrompt(content, type) {
+            const prompts = {
+                emoji: `请为以下中文文本添加合适的emoji表情符号，让内容更生动有趣。保持原文的意思不变，只需要在合适的位置添加emoji。请直接返回优化后的文本，不要添加任何解释。
+
+原文：${content}`,
+
+                engaging: `请将以下中文文本改写得更有吸引力和感染力，可以添加一些积极的词汇、emoji或者引人注目的开头结尾，让读者更愿意阅读和参与。保持原意不变。请直接返回优化后的文本，不要添加任何解释。
+
+原文：${content}`,
+
+                professional: `请将以下中文文本改写得更加正式和专业，使用更规范的商务用语，让内容更适合正式的工作场合。保持原意不变。请直接返回优化后的文本，不要添加任何解释。
+
+原文：${content}`,
+
+                concise: `请将以下中文文本改写得更加简洁明了，去除冗余的词汇和表达，保留核心信息，让内容更直接有效。请直接返回优化后的文本，不要添加任何解释。
+
+原文：${content}`
+            };
+
+            return prompts[type] || prompts.engaging;
+        }
+
+        // 检查API密钥配置
+        function checkAPIConfiguration() {
+            const statusElement = document.getElementById('apiStatus');
+            if (!statusElement) return;
+            
+            if (CLAUDE_API_CONFIG.apiKey === 'YOUR_CLAUDE_API_KEY') {
+                statusElement.innerHTML = '🔧 需要配置Claude API密钥';
+                statusElement.style.color = '#ff9800';
+            } else {
+                statusElement.innerHTML = '✅ Claude API已配置';
+                statusElement.style.color = '#4caf50';
+            }
+        }
+
+        // 页面加载时检查API配置
+        document.addEventListener('DOMContentLoaded', function() {
+            // 延迟检查，确保DOM元素已加载
+            setTimeout(checkAPIConfiguration, 500);
+        });
+
+        // AI内容优化功能（使用Claude API）
+        async function optimizeContent(type) {
+            const contentTextarea = document.getElementById('content');
+            const originalContent = contentTextarea.value.trim();
+            
+            if (!originalContent) {
+                alert('请先输入发送内容，然后再使用AI优化功能。');
+                return;
+            }
+            
+            currentOptimizationType = type;
+            
+            // 显示加载状态
+            showAISuggestions();
+            document.getElementById('suggestionContent').innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 24px; margin-bottom: 10px;">🤖</div>
+                    <div>Claude AI正在优化您的内容...</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">使用Claude-3-Haiku模型</div>
+                </div>
+            `;
+            
+            try {
+                // 首先尝试使用Claude API
+                const prompt = generateClaudePrompt(originalContent, type);
+                const claudeResult = await callClaudeAPI(prompt);
+                
+                if (claudeResult) {
+                    // Claude API成功
+                    displaySuggestion(claudeResult.trim());
+                    showTemporaryMessage('✨ Claude AI优化完成！', 'success');
+                } else {
+                    // API失败，使用本地规则作为备选
+                    const fallbackResult = generateOptimizedContent(originalContent, type);
+                    displaySuggestion(fallbackResult);
+                    showTemporaryMessage('⚠️ 使用本地规则优化（API不可用）', 'warning');
+                }
+            } catch (error) {
+                console.error('优化过程出错:', error);
+                // 出错时使用本地规则
+                const fallbackResult = generateOptimizedContent(originalContent, type);
+                displaySuggestion(fallbackResult);
+                showTemporaryMessage('⚠️ 使用本地规则优化（网络错误）', 'warning');
+            }
+        }
+
+        // 生成优化内容
+        function generateOptimizedContent(content, type) {
+            const templates = {
+                emoji: {
+                    patterns: [
+                        { keyword: '通知', emoji: '📢' },
+                        { keyword: '重要', emoji: '⚠️' },
+                        { keyword: '新功能', emoji: '🆕' },
+                        { keyword: '更新', emoji: '🔄' },
+                        { keyword: '优惠', emoji: '💰' },
+                        { keyword: '活动', emoji: '🎉' },
+                        { keyword: '提醒', emoji: '⏰' },
+                        { keyword: '成功', emoji: '✅' },
+                        { keyword: '完成', emoji: '✨' },
+                        { keyword: '开始', emoji: '🚀' },
+                        { keyword: '结束', emoji: '🏁' },
+                        { keyword: '问题', emoji: '❓' },
+                        { keyword: '解决', emoji: '💡' },
+                        { keyword: '帮助', emoji: '🤝' },
+                        { keyword: '支持', emoji: '💪' }
+                    ],
+                    transform: (text) => {
+                        let result = text;
+                        templates.emoji.patterns.forEach(pattern => {
+                            if (result.includes(pattern.keyword)) {
+                                result = result.replace(new RegExp(pattern.keyword, 'g'), `${pattern.emoji} ${pattern.keyword}`);
+                            }
+                        });
+                        
+                        // 如果没有匹配到关键词，在开头添加通用emoji
+                        if (result === text) {
+                            result = `📢 ${text}`;
+                        }
+                        
+                        return result;
+                    }
+                },
+                
+                engaging: {
+                    prefixes: [
+                        '🎉 好消息！',
+                        '✨ 特别通知：',
+                        '🚀 重要更新：',
+                        '💡 温馨提示：',
+                        '🔥 热门推荐：'
+                    ],
+                    suffixes: [
+                        '快来了解详情吧！',
+                        '不要错过这个机会！',
+                        '期待您的参与！',
+                        '让我们一起行动起来！',
+                        '更多精彩等着您！'
+                    ],
+                    transform: (text) => {
+                        const prefix = templates.engaging.prefixes[Math.floor(Math.random() * templates.engaging.prefixes.length)];
+                        const suffix = templates.engaging.suffixes[Math.floor(Math.random() * templates.engaging.suffixes.length)];
+                        return `${prefix} ${text} ${suffix}`;
+                    }
+                },
+                
+                professional: {
+                    replacements: [
+                        { from: '大家好', to: '尊敬的各位同事' },
+                        { from: '通知一下', to: '特此通知' },
+                        { from: '请注意', to: '请各位留意' },
+                        { from: '谢谢', to: '感谢您的配合' },
+                        { from: '麻烦', to: '烦请' },
+                        { from: '赶紧', to: '请及时' }
+                    ],
+                    transform: (text) => {
+                        let result = text;
+                        templates.professional.replacements.forEach(replacement => {
+                            result = result.replace(new RegExp(replacement.from, 'g'), replacement.to);
+                        });
+                        
+                        // 确保以正式的结尾
+                        if (!result.endsWith('。') && !result.endsWith('！')) {
+                            result += '。';
+                        }
+                        
+                        return result;
+                    }
+                },
+                
+                concise: {
+                    removals: [
+                        '请大家注意',
+                        '在这里通知大家',
+                        '我想说的是',
+                        '需要告诉大家的是',
+                        '特别提醒一下'
+                    ],
+                    transform: (text) => {
+                        let result = text;
+                        templates.concise.removals.forEach(removal => {
+                            result = result.replace(new RegExp(removal, 'g'), '');
+                        });
+                        
+                        // 移除多余的空格和标点
+                        result = result.replace(/\s+/g, ' ').trim();
+                        result = result.replace(/，+/g, '，');
+                        result = result.replace(/。+/g, '。');
+                        
+                        return result;
+                    }
+                }
+            };
+            
+            return templates[type].transform(content);
+        }
+
+        // 显示AI建议
+        function showAISuggestions() {
+            document.getElementById('aiSuggestions').style.display = 'block';
+        }
+
+        // 显示建议内容
+        function displaySuggestion(suggestion) {
+            currentSuggestion = suggestion;
+            document.getElementById('suggestionContent').innerHTML = suggestion;
+        }
+
+        // 应用建议
+        function applySuggestion() {
+            if (currentSuggestion) {
+                document.getElementById('content').value = currentSuggestion;
+                closeSuggestions();
+                
+                // 显示成功提示
+                showTemporaryMessage('✅ AI优化已应用！', 'success');
+            }
+        }
+
+        // 重新生成建议
+        async function regenerateSuggestion() {
+            const contentTextarea = document.getElementById('content');
+            const originalContent = contentTextarea.value.trim();
+            
+            if (originalContent && currentOptimizationType) {
+                await optimizeContent(currentOptimizationType);
+            }
+        }
+
+        // 关闭建议
+        function closeSuggestions() {
+            document.getElementById('aiSuggestions').style.display = 'none';
+        }
+
+        // 显示临时消息
+        function showTemporaryMessage(message, type = 'info') {
+            const colors = {
+                success: '#4caf50',
+                warning: '#ff9800',
+                error: '#f44336',
+                info: '#2196f3'
+            };
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${colors[type] || colors.info};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 10000;
+                font-size: 14px;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+            `;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (document.body.contains(messageDiv)) {
+                        document.body.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 生成循环日期列表
+        function generateRecurrenceDates(startDate, recurrence, endDate) {
+            const dates = [startDate];
+            
+            if (recurrence === 'none') {
+                return dates;
+            }
+            
+            const start = new Date(startDate);
+            const end = endDate ? new Date(endDate) : null;
+            const maxDates = 52;
+            
+            let currentDate = new Date(start);
+            let count = 1;
+            
+            while (count < maxDates) {
+                if (recurrence === 'weekly') {
+                    currentDate.setDate(currentDate.getDate() + 7);
+                } else if (recurrence === 'monthly') {
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                }
+                
+                if (end && currentDate > end) {
+                    break;
+                }
+                
+                dates.push(currentDate.toISOString().split('T')[0]);
+                count++;
+            }
+            
+            return dates;
+        }
+
+        // 模拟邮件通知
+        function simulateEmailNotification(request) {
+            console.log('📧 邮件通知已发送给 zhiyafan@amazon.com');
+            
+            const isRecurring = request.sendDates && request.sendDates.length > 1;
+            const subject = isRecurring 
+                ? `[Mass Community] 新的循环发送需求待审核 - ${request.target} (${request.totalCount}个任务)`
+                : `[Mass Community] 新的发送需求待审核 - ${request.target}`;
+            
+            const dateInfo = isRecurring 
+                ? `发送日期：${request.sendDates.join(', ')}\n                    循环类型：${request.recurrence === 'weekly' ? '每周' : '每月'}循环\n                    总任务数：${request.totalCount}个`
+                : `发送日期：${request.sendDate}`;
+            
+            console.log('邮件内容：', {
+                subject: subject,
+                to: 'zhiyafan@amazon.com',
+                content: `
+                    有新的mass community发送需求需要您的审核：
+                    
+                    提交人：${request.submitter} (${request.email})
+                    Team/Domain：${request.teamDomain || 'N/A'}
+                    发送对象：${request.arc}-${request.cohort}
+                    ${dateInfo}
+                    发送内容：${request.content}
+                    备注：${request.notes || '无'}
+                    提交时间：${request.submitTime}
+                    
+                    请登录管理系统进行审核。
+                `
+            });
+        }
+
+        // 显示标签页
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // 如果切换到管理员页面，重新加载待审核需求
+            if (tabName === 'admin') {
+                loadPendingRequests();
+            }
+            
+            // 如果切换到审核记录页面，加载审核记录
+            if (tabName === 'records') {
+                loadAuditRecords();
+            }
+        }
+
+        // 全局的检查当前选择函数
+        function checkCurrentSelection() {
+            const sendDateInput = document.getElementById('sendDate');
+            const arcSelect = document.getElementById('arc');
+            const cohortSelect = document.getElementById('cohort');
+            
+            if (!sendDateInput || !arcSelect || !cohortSelect) return;
+            
+            const currentDate = sendDateInput.value;
+            const currentArc = arcSelect.value;
+            const currentCohort = cohortSelect.value;
+            
+            // 只有当所有字段都有值时才检查限制
+            if (currentDate && currentArc && currentCohort) {
+                const currentCount = checkDateContentLimit(currentDate, currentArc, currentCohort);
+                console.log(`检查日期 ${currentDate}, ARC: ${currentArc}, Cohort: ${currentCohort}, 当前数量: ${currentCount}`);
+                
+                if (currentCount >= 2) {
+                    const details = getDateContentDetails(currentDate, currentArc, currentCohort);
+                    showDateLimitWarning(currentDate, currentArc, currentCohort, details);
+                }
+            }
+        }
+
+        // 打开提交需求模态框
+        function openSubmitModal(dateStr) {
+            console.log('点击的日期:', dateStr);
+            
+            selectedDate = dateStr;
+            
+            // 确保日期格式正确 (YYYY-MM-DD)
+            let formattedDate = dateStr;
+            if (dateStr.includes('T')) {
+                formattedDate = dateStr.split('T')[0];
+            }
+            
+            console.log('格式化后的日期:', formattedDate);
+            
+            // 验证日期格式
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(formattedDate)) {
+                console.error('日期格式不正确:', formattedDate);
+                // 尝试从Date对象重新生成
+                const date = new Date(dateStr);
+                if (!isNaN(date.getTime())) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    formattedDate = `${year}-${month}-${day}`;
+                    console.log('重新生成的日期:', formattedDate);
+                }
+            }
+            
+            document.getElementById('sendDate').value = formattedDate;
+            console.log('设置到表单的日期:', document.getElementById('sendDate').value);
+            
+            document.getElementById('submitModal').style.display = 'block';
+            
+            // 清除之前的事件监听器，避免重复绑定
+            const sendDateInput = document.getElementById('sendDate');
+            const arcSelect = document.getElementById('arc');
+            const cohortSelect = document.getElementById('cohort');
+            
+            // 移除之前的监听器
+            sendDateInput.removeEventListener('change', checkCurrentSelection);
+            arcSelect.removeEventListener('change', checkCurrentSelection);
+            cohortSelect.removeEventListener('change', checkCurrentSelection);
+            
+            // 添加事件监听器
+            sendDateInput.addEventListener('change', checkCurrentSelection);
+            arcSelect.addEventListener('change', checkCurrentSelection);
+            cohortSelect.addEventListener('change', checkCurrentSelection);
+        }
+
+        // 关闭模态框
+        function closeSubmitModal() {
+            document.getElementById('submitModal').style.display = 'none';
+            document.getElementById('requestForm').reset();
+            selectedImages = [];
+            document.getElementById('imagePreview').innerHTML = '';
+            document.getElementById('recurrenceDetails').style.display = 'none';
+            
+            // 清理事件监听器，避免内存泄漏和重复绑定
+            const sendDateInput = document.getElementById('sendDate');
+            const arcSelect = document.getElementById('arc');
+            const cohortSelect = document.getElementById('cohort');
+            
+            if (sendDateInput && arcSelect && cohortSelect) {
+                sendDateInput.removeEventListener('change', checkCurrentSelection);
+                arcSelect.removeEventListener('change', checkCurrentSelection);
+                cohortSelect.removeEventListener('change', checkCurrentSelection);
+            }
+        }
+
+        function closeEventModal() {
+            document.getElementById('eventModal').style.display = 'none';
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+
+        // 日历筛选功能
+        function filterCalendar(filterType) {
+            currentFilter = filterType;
+            
+            document.querySelectorAll('.legend-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${filterType}"]`).classList.add('active');
+            
+            generateCalendar();
+        }
+
+        // 月份导航
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            generateCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            generateCalendar();
+        }
+
+        // 生成日历
+        function generateCalendar() {
+            const calendar = document.getElementById('calendarGrid');
+            const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+            const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            
+            document.getElementById('currentMonth').textContent = `${currentDate.getFullYear()}年 ${monthNames[currentDate.getMonth()]}`;
+            
+            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            let calendarHTML = '';
+            
+            // 添加星期标题
+            dayNames.forEach(day => {
+                calendarHTML += `<div class="calendar-header">${day}</div>`;
+            });
+            
+            // 生成日历格子
+            for (let i = 0; i < 42; i++) {
+                // 修复日期计算，避免跨月份时的错误
+                const cellDate = new Date(startDate.getTime() + (i * 24 * 60 * 60 * 1000));
+                
+                const isCurrentMonth = cellDate.getMonth() === currentDate.getMonth();
+                const isToday = cellDate.toDateString() === new Date().toDateString();
+                
+                // 使用本地日期格式，避免时区问题
+                const year = cellDate.getFullYear();
+                const month = String(cellDate.getMonth() + 1).padStart(2, '0');
+                const day = String(cellDate.getDate()).padStart(2, '0');
+                const dateStr = `${year}-${month}-${day}`;
+                
+                const isPastDate = cellDate < new Date().setHours(0,0,0,0);
+                
+                let dayClass = 'calendar-day';
+                if (!isCurrentMonth) dayClass += ' other-month';
+                if (isToday) dayClass += ' today';
+                if (isCurrentMonth && !isPastDate) dayClass += ' clickable';
+                
+                // 获取该日期的所有事件（包括已批准和待审核的）
+                let dayEvents = approvedEvents.filter(event => event.date === dateStr);
+                let pendingEvents = requests.filter(req => req.status === 'pending' && req.sendDate === dateStr);
+                
+                // 根据筛选条件过滤已批准事件
+                if (currentFilter !== 'all') {
+                    dayEvents = dayEvents.filter(event => eventMatchesFilter(event, currentFilter));
+                    pendingEvents = pendingEvents.filter(event => eventMatchesFilter(event, currentFilter));
+                }
+                
+                let eventsHTML = '';
+                
+                // 显示已批准的事件（正常颜色）
+                dayEvents.forEach(event => {
+                    let eventClass = 'event';
+                    if (event.arc && event.cohort) {
+                        eventClass += ` ${event.arc.toLowerCase()}`;
+                    } else if (event.target) {
+                        eventClass += ` ${event.target.toLowerCase()}`;
+                    }
+                    
+                    eventsHTML += `
+                        <div class="${eventClass}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                                <span onclick="showEventDetails(${JSON.stringify(event).replace(/"/g, '&quot;')})" 
+                                      style="cursor: pointer; flex: 1; overflow: hidden; text-overflow: ellipsis;">${event.title}</span>
+                                <div style="display: flex; gap: 2px;">
+                                    <button onclick="event.stopPropagation(); copyEventContent(${event.id})" 
+                                            id="copy-event-${event.id}" 
+                                            style="background: rgba(255,255,255,0.8); border: none; border-radius: 2px; 
+                                                   padding: 1px 3px; font-size: 10px; cursor: pointer;"
+                                            title="复制内容">📋</button>
+                                    <button onclick="event.stopPropagation(); deleteEvent(${event.id})" 
+                                            id="delete-event-${event.id}" 
+                                            style="background: rgba(220,53,69,0.8); color: white; border: none; border-radius: 2px; 
+                                                   padding: 1px 3px; font-size: 10px; cursor: pointer;"
+                                            title="删除内容">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // 显示待审核的事件（灰色）
+                pendingEvents.forEach(event => {
+                    const title = `${event.arc}-${event.cohort}: ${event.content.substring(0, 20)}...`;
+                    
+                    eventsHTML += `
+                        <div class="event pending-event" title="待审核：${event.content}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${title}</span>
+                                <div style="display: flex; gap: 2px; align-items: center;">
+                                    <span style="font-size: 10px; opacity: 0.7;">⏳</span>
+                                    <button onclick="event.stopPropagation(); deletePendingRequest(${event.id})" 
+                                            id="delete-pending-${event.id}" 
+                                            style="background: rgba(220,53,69,0.8); color: white; border: none; border-radius: 2px; 
+                                                   padding: 1px 3px; font-size: 10px; cursor: pointer;"
+                                            title="删除待审核内容">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                const clickHandler = (isCurrentMonth && !isPastDate) ? `onclick="openSubmitModal('${dateStr}')"` : '';
+                
+                // 计算该日期的总内容数量（用于显示提示）
+                const totalEventsCount = dayEvents.length + pendingEvents.length;
+                let contentCountIndicator = '';
+                if (totalEventsCount > 0) {
+                    contentCountIndicator = `<div class="content-count-indicator" title="该日期已有${totalEventsCount}个内容">${totalEventsCount}</div>`;
+                }
+                
+                calendarHTML += `
+                    <div class="${dayClass}" ${clickHandler}>
+                        <div class="day-number">${cellDate.getDate()}</div>
+                        ${contentCountIndicator}
+                        ${eventsHTML}
+                    </div>
+                `;
+            }
+            
+            calendar.innerHTML = calendarHTML;
+        }
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 不再清空本地存储，保留用户数据
+            generateCalendar();
+            
+            // 初始化筛选状态
+            setTimeout(() => {
+                const allFilter = document.querySelector('[data-filter="all"]');
+                if (allFilter) {
+                    allFilter.classList.add('active');
+                }
+            }, 100);
+            
+            // 循环设置显示/隐藏
+            const recurrenceSelect = document.getElementById('recurrence');
+            const recurrenceDetails = document.getElementById('recurrenceDetails');
+            
+            if (recurrenceSelect) {
+                recurrenceSelect.addEventListener('change', function() {
+                    if (this.value === 'none') {
+                        recurrenceDetails.style.display = 'none';
+                    } else {
+                        recurrenceDetails.style.display = 'block';
+                    }
+                });
+            }
+        });
+
+        // 图片预览功能
+        function previewImages(input) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+            selectedImages = [];
+            
+            if (input.files) {
+                Array.from(input.files).forEach((file, index) => {
+                    if (index >= 5) return; // 最多5张图片
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        selectedImages.push({
+                            name: file.name,
+                            data: e.target.result,
+                            size: file.size
+                        });
+                        
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'preview-item';
+                        previewItem.innerHTML = `
+                            <img src="${e.target.result}" alt="${file.name}">
+                            <button type="button" class="remove-image" onclick="removeImage(${index})">×</button>
+                        `;
+                        preview.appendChild(previewItem);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        // 移除图片
+        function removeImage(index) {
+            selectedImages.splice(index, 1);
+            const input = document.getElementById('images');
+            input.value = '';
+            document.getElementById('imagePreview').innerHTML = '';
+            
+            // 重新预览剩余图片
+            if (selectedImages.length > 0) {
+                selectedImages.forEach((img, i) => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    previewItem.innerHTML = `
+                        <img src="${img.data}" alt="${img.name}">
+                        <button type="button" class="remove-image" onclick="removeImage(${i})">×</button>
+                    `;
+                    document.getElementById('imagePreview').appendChild(previewItem);
+                });
+            }
+        }
+
+        // 表单提交处理
+        document.getElementById('requestForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            const arc = formData.get('arc');
+            const cohort = formData.get('cohort');
+            const target = `${arc}-${cohort}`;
+            
+            const recurrence = formData.get('recurrence');
+            const recurrenceEnd = formData.get('recurrenceEnd');
+            const sendDate = formData.get('sendDate');
+            
+            const sendDates = generateRecurrenceDates(sendDate, recurrence, recurrenceEnd);
+            
+            // 检查所有发送日期是否超出限制
+            console.log('开始检查发送日期限制...');
+            console.log('发送日期列表:', sendDates);
+            console.log('目标 ARC:', arc, 'Cohort:', cohort);
+            
+            const conflictDates = [];
+            sendDates.forEach(date => {
+                console.log(`检查日期: ${date}`);
+                const currentCount = checkDateContentLimit(date, arc, cohort);
+                const canAdd = canAddContentToDate(date, arc, cohort);
+                
+                console.log(`日期 ${date} - 当前数量: ${currentCount}, 可以添加: ${canAdd}`);
+                
+                if (!canAdd) {
+                    const details = getDateContentDetails(date, arc, cohort);
+                    console.log(`日期 ${date} 超出限制，详情:`, details);
+                    conflictDates.push({
+                        date: date,
+                        details: details
+                    });
+                } else {
+                    console.log(`日期 ${date} 可以添加内容`);
+                }
+            });
+            
+            console.log('冲突日期数量:', conflictDates.length);
+            
+            // 如果有冲突日期，显示警告并阻止提交
+            if (conflictDates.length > 0) {
+                console.log('发现冲突日期，阻止提交');
+                const conflictInfo = conflictDates.map(conflict => {
+                    const existingContent = [];
+                    conflict.details.approved.forEach(item => {
+                        existingContent.push(`• ${item.title} (已批准)`);
+                    });
+                    conflict.details.pending.forEach(item => {
+                        existingContent.push(`• ${item.arc}-${item.cohort}: ${item.content.substring(0, 30)}... (待审核)`);
+                    });
+                    
+                    return `
+                        <div style="margin-bottom: 15px; padding: 10px; border: 1px solid #dc3545; border-radius: 5px; background: #f8d7da;">
+                            <strong>${conflict.date}</strong> (${conflict.details.total}/2)
+                            <div style="margin-top: 5px; font-size: 14px;">
+                                ${existingContent.join('<br>')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                const message = `
+                    <div style="text-align: left;">
+                        <h4 style="color: #dc3545; margin-bottom: 15px;">⚠️ 以下日期发送内容已到达上限</h4>
+                        <p><strong>目标：</strong> ${target}</p>
+                        <div style="margin: 15px 0;">
+                            ${conflictInfo}
+                        </div>
+                        <p style="color: #dc3545; font-weight: 600;">请修改发送日期、ARC/Cohort设置，或调整循环设置。</p>
+                    </div>
+                `;
+                
+                showCustomModal('无法提交需求', message);
+                return; // 阻止提交
+            }
+            
+            const recurringGroup = Date.now();
+            sendDates.forEach((date, index) => {
+                const request = {
+                    id: Date.now() + index,
+                    content: formData.get('content'),
+                    arc: arc,
+                    cohort: cohort,
+                    target: target,
+                    sendDate: date,
+                    submitter: formData.get('submitter'),
+                    teamDomain: formData.get('teamDomain'),
+                    email: formData.get('email'),
+                    notes: formData.get('notes'),
+                    images: selectedImages,
+                    recurrence: recurrence,
+                    recurrenceEnd: recurrenceEnd,
+                    isRecurring: recurrence !== 'none',
+                    recurringGroup: recurringGroup,
+                    submitTime: new Date().toLocaleString('zh-CN'),
+                    status: 'pending'
+                };
+                
+                requests.push(request);
+            });
+            
+            localStorage.setItem('massRequests', JSON.stringify(requests));
+            
+            simulateEmailNotification({
+                ...requests[requests.length - sendDates.length],
+                sendDates: sendDates,
+                totalCount: sendDates.length
+            });
+            
+            document.getElementById('submitTime').textContent = new Date().toLocaleString('zh-CN');
+            closeSubmitModal();
+            document.getElementById('successModal').style.display = 'block';
+        });
+
+        // 占位函数替换为完整实现
+        
+        // 加载待审核需求
+        function loadPendingRequests() {
+            const pendingContainer = document.getElementById('pendingRequests');
+            const pendingRequests = requests.filter(req => req.status === 'pending');
+            
+            if (pendingRequests.length === 0) {
+                pendingContainer.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 40px;">暂无待审核需求</p>';
+                return;
+            }
+            
+            // 按循环组分组
+            const groupedRequests = {};
+            pendingRequests.forEach(request => {
+                const groupKey = request.recurringGroup || request.id;
+                if (!groupedRequests[groupKey]) {
+                    groupedRequests[groupKey] = [];
+                }
+                groupedRequests[groupKey].push(request);
+            });
+            
+            // 生成显示内容
+            const groupsHtml = Object.values(groupedRequests).map(group => {
+                const mainRequest = group[0]; // 使用第一个请求作为主要信息
+                const isRecurring = group.length > 1;
+                const dates = group.map(r => r.sendDate).sort();
+                
+                return `
+                <div class="request-item">
+                    <div class="request-header">
+                        <strong>${mainRequest.arc}-${mainRequest.cohort}${isRecurring ? ` (循环 - ${group.length}个任务)` : ` - ${mainRequest.sendDate}`}</strong>
+                        <div class="request-actions">
+                            <button class="btn btn-success" onclick="approveRecurringGroup('${mainRequest.recurringGroup || mainRequest.id}')">✅ 通过</button>
+                            <button class="btn btn-danger" onclick="rejectRecurringGroup('${mainRequest.recurringGroup || mainRequest.id}')">❌ 拒绝</button>
+                        </div>
+                    </div>
+                    <div class="request-meta">
+                        提交人：${mainRequest.submitter}${mainRequest.teamDomain ? ` (${mainRequest.teamDomain})` : ''} | 邮箱：${mainRequest.email} | 提交时间：${mainRequest.submitTime}
+                        ${isRecurring ? `<br><strong>发送日期：</strong> ${dates.join(', ')}<br><strong>循环设置：</strong> ${mainRequest.recurrence === 'weekly' ? '每周' : '每月'}循环${mainRequest.recurrenceEnd ? ` 至 ${mainRequest.recurrenceEnd}` : ' (无限)'}` : ''}
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong>发送内容：</strong><br>
+                        ${mainRequest.content.replace(/\n/g, '<br>')}
+                    </div>
+                    ${mainRequest.images && mainRequest.images.length > 0 ? `
+                        <div style="margin: 10px 0;">
+                            <strong>附件图片 (${mainRequest.images.length}张)：</strong>
+                            ${createImageGallery(mainRequest.images)}
+                        </div>
+                    ` : ''}
+                    ${mainRequest.notes ? `<div><strong>备注：</strong> ${mainRequest.notes}</div>` : ''}
+                </div>
+            `}).join('');
+            
+            pendingContainer.innerHTML = groupsHtml;
+        }
+
+        // 审核通过循环组
+        function approveRecurringGroup(groupId) {
+            const groupRequests = requests.filter(req => 
+                (req.recurringGroup && req.recurringGroup.toString() === groupId.toString()) || 
+                (req.id.toString() === groupId.toString())
+            );
+            
+            if (groupRequests.length === 0) return;
+            
+            const approveTime = new Date().toLocaleString('zh-CN');
+            
+            groupRequests.forEach(request => {
+                if (request.status === 'pending') {
+                    request.status = 'approved';
+                    request.approveTime = approveTime;
+                    
+                    // 添加到已批准事件列表
+                    approvedEvents.push({
+                        id: request.id,
+                        title: `${request.arc || 'N/A'}-${request.cohort || 'N/A'}: ${request.content.substring(0, 30)}...`,
+                        date: request.sendDate,
+                        target: request.target ? request.target.toLowerCase() : 'unknown',
+                        arc: request.arc,
+                        cohort: request.cohort,
+                        content: request.content,
+                        submitter: request.submitter,
+                        teamDomain: request.teamDomain,
+                        notes: request.notes,
+                        images: request.images || []
+                    });
+                }
+            });
+            
+            // 更新本地存储
+            localStorage.setItem('massRequests', JSON.stringify(requests));
+            localStorage.setItem('approvedEvents', JSON.stringify(approvedEvents));
+            
+            // 重新加载页面数据
+            loadPendingRequests();
+            generateCalendar();
+            
+            const message = groupRequests.length > 1 
+                ? `循环需求已通过！共批准 ${groupRequests.length} 个发送任务。`
+                : '需求已通过！';
+            showTemporaryMessage(message, 'success');
+        }
+
+        // 拒绝循环组
+        function rejectRecurringGroup(groupId) {
+            const reason = prompt('请输入拒绝原因：');
+            if (!reason) return;
+            
+            const groupRequests = requests.filter(req => 
+                (req.recurringGroup && req.recurringGroup.toString() === groupId.toString()) || 
+                (req.id.toString() === groupId.toString())
+            );
+            
+            if (groupRequests.length === 0) return;
+            
+            const rejectTime = new Date().toLocaleString('zh-CN');
+            
+            groupRequests.forEach(request => {
+                if (request.status === 'pending') {
+                    request.status = 'rejected';
+                    request.rejectReason = reason;
+                    request.rejectTime = rejectTime;
+                }
+            });
+            
+            localStorage.setItem('massRequests', JSON.stringify(requests));
+            loadPendingRequests();
+            generateCalendar(); // 重新生成日历以移除被拒绝的请求
+            
+            const message = groupRequests.length > 1 
+                ? `循环需求已拒绝！共拒绝 ${groupRequests.length} 个发送任务。`
+                : '需求已拒绝！';
+            showTemporaryMessage(message, 'warning');
+        }
+
+        // 创建图片画廊
+        function createImageGallery(images) {
+            if (!images || images.length === 0) return '';
+            
+            return images.map(img => `
+                <div style="display: inline-block; margin: 5px;">
+                    <img src="${img.data}" alt="${img.name}" 
+                         style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+                         onclick="showImageModal('${img.data}', '${img.name}')">
+                </div>
+            `).join('');
+        }
+
+        // 显示图片模态框
+        function showImageModal(src, name) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.8); z-index: 10000; display: flex;
+                align-items: center; justify-content: center; cursor: pointer;
+            `;
+            
+            modal.innerHTML = `
+                <div style="max-width: 90%; max-height: 90%; text-align: center;">
+                    <img src="${src}" alt="${name}" style="max-width: 100%; max-height: 100%; border-radius: 8px;">
+                    <div style="color: white; margin-top: 10px; font-size: 14px;">${name}</div>
+                    <div style="color: #ccc; margin-top: 5px; font-size: 12px;">点击任意位置关闭</div>
+                </div>
+            `;
+            
+            modal.onclick = () => document.body.removeChild(modal);
+            document.body.appendChild(modal);
+        }
+
+        function loadAuditRecords() {
+            const recordsList = document.getElementById('recordsList');
+            const statusFilter = document.getElementById('statusFilter').value;
+            const arcFilter = document.getElementById('arcFilter').value;
+            const cohortFilter = document.getElementById('cohortFilter').value;
+            const idSearch = document.getElementById('idSearch').value.trim();
+            const emailSearch = document.getElementById('emailSearch').value.trim();
+            
+            // 筛选记录
+            let filteredRequests = requests.filter(request => {
+                const statusMatch = statusFilter === 'all' || request.status === statusFilter;
+                const arcMatch = arcFilter === 'all' || request.arc === arcFilter;
+                const cohortMatch = cohortFilter === 'all' || request.cohort === cohortFilter;
+                const idMatch = !idSearch || request.id.toString().includes(idSearch);
+                const emailMatch = !emailSearch || request.email.toLowerCase().includes(emailSearch.toLowerCase());
+                return statusMatch && arcMatch && cohortMatch && idMatch && emailMatch;
+            });
+            
+            // 合并循环请求
+            const mergedRequests = mergeRecurringRequests(filteredRequests);
+            
+            // 按提交时间倒序排列
+            mergedRequests.sort((a, b) => new Date(b.submitTime) - new Date(a.submitTime));
+            
+            if (mergedRequests.length === 0) {
+                let message = '暂无符合条件的记录';
+                if (idSearch) message = `未找到ID包含 "${idSearch}" 的记录`;
+                if (emailSearch) message = `未找到邮箱包含 "${emailSearch}" 的记录`;
+                if (idSearch && emailSearch) message = `未找到ID包含 "${idSearch}" 且邮箱包含 "${emailSearch}" 的记录`;
+                recordsList.innerHTML = `<p style="text-align: center; color: #6c757d; padding: 40px;">${message}</p>`;
+                return;
+            }
+            
+            // 生成统计信息
+            const stats = generateStats(mergedRequests);
+            
+            recordsList.innerHTML = `
+                <div class="stats-summary">
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.total}</div>
+                        <div class="stat-label">总记录数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.approved}</div>
+                        <div class="stat-label">已通过</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.rejected}</div>
+                        <div class="stat-label">已拒绝</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.pending}</div>
+                        <div class="stat-label">待审核</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.deleted}</div>
+                        <div class="stat-label">已删除</div>
+                    </div>
+                </div>
+                ${mergedRequests.map(request => {
+                    const idSearch = document.getElementById('idSearch').value.trim();
+                    const emailSearch = document.getElementById('emailSearch').value.trim();
+                    
+                    // ID高亮
+                    const highlightedId = idSearch && request.id.toString().includes(idSearch)
+                        ? request.id.toString().replace(new RegExp(idSearch, 'gi'), `<mark style="background: #ffeb3b; padding: 2px 4px; border-radius: 2px;">$&</mark>`)
+                        : request.id;
+                    
+                    // 邮箱高亮
+                    const highlightedEmail = emailSearch && request.email.toLowerCase().includes(emailSearch.toLowerCase())
+                        ? request.email.replace(new RegExp(emailSearch, 'gi'), `<mark style="background: #ffeb3b; padding: 2px 4px; border-radius: 2px;">$&</mark>`)
+                        : request.email;
+                    
+                    return `
+                    <div class="record-item">
+                        <div class="record-header">
+                            <div>
+                                <strong>${request.target} - ${request.sendDate}</strong>
+                                <span class="record-status ${request.status}">${getStatusText(request.status)}</span>
+                            </div>
+                            <div style="font-size: 14px; color: #6c757d; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                <span>ID: ${highlightedId}</span>
+                                ${request.status !== 'deleted' ? `<button class="copy-btn" onclick="copyRecordContent(${request.id})" id="copy-record-${request.id}" title="复制发送内容">📋</button>` : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="record-meta">
+                            <div><strong>提交人：</strong> ${request.submitter}</div>
+                            ${request.teamDomain ? `<div><strong>Team/Domain：</strong> ${request.teamDomain}</div>` : ''}
+                            <div><strong>邮箱：</strong> ${highlightedEmail}</div>
+                            <div><strong>ARC：</strong> ${request.arc || 'N/A'}</div>
+                            <div><strong>Cohort：</strong> ${request.cohort || 'N/A'}</div>
+                            <div><strong>发送时间：</strong> ${request.sendDate}</div>
+                            ${request.isRecurring ? `<div><strong>循环类型：</strong> ${request.recurrence === 'weekly' ? '每周' : '每月'}循环</div>` : ''}
+                            ${request.recurrenceEnd ? `<div><strong>循环结束：</strong> ${request.recurrenceEnd}</div>` : ''}
+                            <div><strong>提交时间：</strong> ${request.submitTime}</div>
+                            ${request.approveTime ? `<div><strong>审核时间：</strong> ${request.approveTime}</div>` : ''}
+                            ${request.rejectTime ? `<div><strong>拒绝时间：</strong> ${request.rejectTime}</div>` : ''}
+                        </div>
+                        
+                        <div>
+                            <strong>发送内容：</strong>
+                        </div>
+                        <div class="record-content" id="record-content-${request.id}">
+                            ${request.status === 'deleted' ? 
+                                `<div style="color: #dc3545; font-weight: bold;">已被移除，请联系管理员</div>` : 
+                                request.content.replace(/\n/g, '<br>')
+                            }
+                        </div>
+                        
+                        ${request.images && request.images.length > 0 && request.status !== 'deleted' ? `
+                            <div style="margin: 10px 0;">
+                                <strong>附件图片 (${request.images.length}张)：</strong>
+                                ${createImageGallery(request.images)}
+                            </div>
+                        ` : ''}
+                        
+                        ${request.notes && request.status !== 'deleted' ? `
+                            <div><strong>备注：</strong> ${request.notes}</div>
+                        ` : ''}
+                        
+                        ${request.rejectReason ? `
+                            <div style="margin-top: 10px; padding: 10px; background: #f8d7da; border-radius: 4px;">
+                                <strong>拒绝原因：</strong> ${request.rejectReason}
+                            </div>
+                        ` : ''}
+                        
+                        ${request.deleteReason ? `
+                            <div style="margin-top: 10px; padding: 10px; background: #f8d7da; border-radius: 4px;">
+                                <strong>删除原因：</strong> ${request.deleteReason}
+                                <br><strong>删除时间：</strong> ${request.deleteTime}
+                            </div>
+                        ` : ''}
+                    </div>
+                `}).join('')}
+            `;
+        }
+        
+        // 合并循环请求
+        function mergeRecurringRequests(requests) {
+            const recurringGroups = {};
+            const nonRecurringRequests = [];
+            
+            // 按循环组分组
+            requests.forEach(request => {
+                if (request.recurringGroup) {
+                    if (!recurringGroups[request.recurringGroup]) {
+                        recurringGroups[request.recurringGroup] = [];
+                    }
+                    recurringGroups[request.recurringGroup].push(request);
+                } else {
+                    nonRecurringRequests.push(request);
+                }
+            });
+            
+            // 合并循环组为单条记录
+            const mergedRecurringRequests = Object.values(recurringGroups).map(group => {
+                // 使用第一个请求作为基础
+                const baseRequest = group[0];
+                
+                // 收集所有发送日期
+                const sendDates = group.map(req => req.sendDate).sort();
+                
+                // 统计状态
+                const statusCounts = {
+                    pending: group.filter(req => req.status === 'pending').length,
+                    approved: group.filter(req => req.status === 'approved').length,
+                    rejected: group.filter(req => req.status === 'rejected').length,
+                    deleted: group.filter(req => req.status === 'deleted').length
+                };
+                
+                // 确定整体状态
+                let overallStatus;
+                if (statusCounts.pending > 0) {
+                    overallStatus = 'pending';
+                } else if (statusCounts.approved > 0 && statusCounts.rejected === 0 && statusCounts.deleted === 0) {
+                    overallStatus = 'approved';
+                } else if (statusCounts.rejected > 0) {
+                    overallStatus = 'rejected';
+                } else if (statusCounts.deleted > 0) {
+                    overallStatus = 'deleted';
+                } else {
+                    overallStatus = 'approved';
+                }
+                
+                // 创建合并后的请求对象
+                return {
+                    ...baseRequest,
+                    id: baseRequest.recurringGroup, // 使用循环组ID作为显示ID
+                    isRecurringGroup: true,
+                    totalCount: group.length,
+                    sendDates: sendDates,
+                    sendDate: `${sendDates[0]} ~ ${sendDates[sendDates.length - 1]}`, // 显示日期范围
+                    status: overallStatus,
+                    statusCounts: statusCounts,
+                    groupRequests: group // 保存原始请求用于详细显示
+                };
+            });
+            
+            // 合并非循环请求和合并后的循环请求
+            return [...nonRecurringRequests, ...mergedRecurringRequests];
+        }
+        
+        // 生成统计信息
+        function generateStats(records) {
+            return {
+                total: records.length,
+                approved: records.filter(r => r.status === 'approved').length,
+                rejected: records.filter(r => r.status === 'rejected').length,
+                pending: records.filter(r => r.status === 'pending').length,
+                deleted: records.filter(r => r.status === 'deleted').length
+            };
+        }
+        
+        // 获取状态文本
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待审核',
+                'approved': '已通过',
+                'rejected': '已拒绝',
+                'deleted': '已被移除'
+            };
+            return statusMap[status] || status;
+        }
+        
+        // 筛选记录
+        function filterRecords() {
+            loadAuditRecords();
+        }
+
+        // 清除搜索
+        function clearSearch() {
+            document.getElementById('idSearch').value = '';
+            filterRecords();
+        }
+        
+        // 复制记录内容
+        function copyRecordContent(recordId) {
+            const request = requests.find(r => r.id === recordId);
+            if (!request) return;
+            
+            const content = request.content;
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(content).then(() => {
+                    showTemporaryMessage('✅ 内容已复制到剪贴板', 'success');
+                    
+                    // 临时改变按钮文字
+                    const button = document.getElementById(`copy-record-${recordId}`);
+                    if (button) {
+                        const originalText = button.textContent;
+                        button.textContent = '✅ 已复制';
+                        button.style.background = '#28a745';
+                        setTimeout(() => {
+                            button.textContent = originalText;
+                            button.style.background = '';
+                        }, 2000);
+                    }
+                }).catch(() => {
+                    fallbackCopyText(content);
+                });
+            } else {
+                fallbackCopyText(content);
+            }
+        }
+        function clearSearch() { 
+            document.getElementById('idSearch').value = '';
+            document.getElementById('emailSearch').value = '';
+            filterRecords();
+        }
+        
+        function exportRecords() { 
+            console.log('导出记录功能待实现...'); 
+        }
+
+        // 显示事件详情
+        function showEventDetails(event) {
+            const modal = document.getElementById('eventModal');
+            const details = document.getElementById('eventDetails');
+            
+            details.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <h4 style="color: #333; margin-bottom: 10px;">${event.arc}-${event.cohort}</h4>
+                    <p style="color: #666; margin-bottom: 5px;"><strong>发送日期：</strong> ${event.date}</p>
+                    <p style="color: #666; margin-bottom: 5px;"><strong>提交人：</strong> ${event.submitter}</p>
+                    ${event.teamDomain ? `<p style="color: #666; margin-bottom: 5px;"><strong>Team/Domain：</strong> ${event.teamDomain}</p>` : ''}
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <h5 style="color: #333; margin-bottom: 8px;">发送内容：</h5>
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 4px; line-height: 1.5;">
+                        ${event.content.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+                ${event.images && event.images.length > 0 ? `
+                    <div style="margin-bottom: 15px;">
+                        <h5 style="color: #333; margin-bottom: 8px;">附件图片：</h5>
+                        ${createImageGallery(event.images)}
+                    </div>
+                ` : ''}
+                ${event.notes ? `
+                    <div style="margin-bottom: 15px;">
+                        <h5 style="color: #333; margin-bottom: 8px;">备注：</h5>
+                        <p style="color: #666;">${event.notes}</p>
+                    </div>
+                ` : ''}
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn" onclick="copyEventContent(${event.id})" style="margin-right: 10px;">📋 复制内容</button>
+                    <button class="btn" onclick="closeEventModal()">关闭</button>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        // 复制事件内容
+        function copyEventContent(eventId) {
+            const event = approvedEvents.find(e => e.id === eventId);
+            if (!event) return;
+            
+            const content = `${event.arc}-${event.cohort} 发送内容：\n${event.content}`;
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(content).then(() => {
+                    showTemporaryMessage('✅ 内容已复制到剪贴板', 'success');
+                }).catch(() => {
+                    fallbackCopyText(content);
+                });
+            } else {
+                fallbackCopyText(content);
+            }
+        }
+
+        // 备用复制方法
+        function fallbackCopyText(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showTemporaryMessage('✅ 内容已复制到剪贴板', 'success');
+            } catch (err) {
+                showTemporaryMessage('❌ 复制失败，请手动复制', 'error');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // 删除已批准的事件
+        function deleteEvent(eventId) {
+            const event = approvedEvents.find(e => e.id === eventId);
+            if (!event) {
+                showTemporaryMessage('❌ 未找到要删除的事件', 'error');
+                return;
+            }
+            
+            // 显示删除原因输入弹窗
+            showDeleteReasonModal(event, (deleteReason) => {
+                // 执行删除操作
+                const eventIndex = approvedEvents.findIndex(e => e.id === eventId);
+                if (eventIndex !== -1) {
+                    approvedEvents.splice(eventIndex, 1);
+                    localStorage.setItem('approvedEvents', JSON.stringify(approvedEvents));
+                }
+                
+                // 在requests中找到对应的记录并标记为已删除
+                const request = requests.find(r => r.id === eventId);
+                if (request) {
+                    request.status = 'deleted';
+                    request.deleteReason = deleteReason;
+                    request.deleteTime = new Date().toLocaleString('zh-CN');
+                    localStorage.setItem('massRequests', JSON.stringify(requests));
+                }
+                
+                // 重新生成日历
+                generateCalendar();
+                
+                showTemporaryMessage('✅ 事件已删除', 'success');
+            });
+        }
+        
+        // 显示删除原因输入弹窗
+        function showDeleteReasonModal(event, onConfirm) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 12px;
+                    padding: 25px;
+                    max-width: 500px;
+                    width: 90%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                ">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h3 style="color: #dc3545; margin-bottom: 10px;">🗑️ 删除事件</h3>
+                        <p style="color: #6c757d;">请输入删除原因</p>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left;">
+                        <p><strong>日期：</strong> ${event.date}</p>
+                        <p><strong>目标：</strong> ${event.arc}-${event.cohort}</p>
+                        <p><strong>标题：</strong> ${event.title}</p>
+                        <div style="margin-top: 10px;">
+                            <strong>内容预览：</strong>
+                            <div style="background: white; padding: 8px; border-radius: 4px; margin-top: 5px; font-size: 14px; max-height: 80px; overflow-y: auto; border: 1px solid #e9ecef;">
+                                ${event.content.substring(0, 150)}${event.content.length > 150 ? '...' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">
+                            删除原因 <span style="color: #dc3545;">*</span>
+                        </label>
+                        <textarea 
+                            id="deleteReasonInput" 
+                            placeholder="请输入删除原因，例如：内容有误、时间冲突、需求变更等..."
+                            style="
+                                width: 100%;
+                                height: 80px;
+                                padding: 10px;
+                                border: 2px solid #e9ecef;
+                                border-radius: 6px;
+                                font-size: 14px;
+                                resize: vertical;
+                                font-family: inherit;
+                                box-sizing: border-box;
+                            "
+                        ></textarea>
+                        <div id="deleteReasonError" style="color: #dc3545; font-size: 12px; margin-top: 5px; display: none;">
+                            请输入删除原因
+                        </div>
+                    </div>
+                    
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 12px; margin-bottom: 20px;">
+                        <p style="color: #856404; font-size: 14px; margin: 0;">
+                            ⚠️ <strong>注意：</strong>删除后无法恢复，该事件将从日历中移除，状态将标记为"已删除"。
+                        </p>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button 
+                            onclick="closeDeleteReasonModal()"
+                            style="
+                                padding: 10px 20px;
+                                border: 2px solid #6c757d;
+                                background: white;
+                                color: #6c757d;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-weight: 600;
+                                transition: all 0.2s;
+                            "
+                            onmouseover="this.style.background='#6c757d'; this.style.color='white';"
+                            onmouseout="this.style.background='white'; this.style.color='#6c757d';"
+                        >
+                            取消
+                        </button>
+                        <button 
+                            onclick="confirmDeleteWithReason()"
+                            style="
+                                padding: 10px 20px;
+                                border: 2px solid #dc3545;
+                                background: #dc3545;
+                                color: white;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-weight: 600;
+                                transition: all 0.2s;
+                            "
+                            onmouseover="this.style.background='#c82333'; this.style.borderColor='#c82333';"
+                            onmouseout="this.style.background='#dc3545'; this.style.borderColor='#dc3545';"
+                        >
+                            确认删除
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 聚焦到输入框
+            setTimeout(() => {
+                const input = document.getElementById('deleteReasonInput');
+                if (input) input.focus();
+            }, 100);
+            
+            // 存储回调函数
+            window.currentDeleteCallback = onConfirm;
+            
+            // 点击背景关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeDeleteReasonModal();
+                }
+            });
+            
+            // ESC键关闭
+            const handleEsc = (e) => {
+                if (e.key === 'Escape') {
+                    closeDeleteReasonModal();
+                    document.removeEventListener('keydown', handleEsc);
+                }
+            };
+            document.addEventListener('keydown', handleEsc);
+        }
+        
+        // 关闭删除原因弹窗
+        function closeDeleteReasonModal() {
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) {
+                modal.remove();
+            }
+            window.currentDeleteCallback = null;
+        }
+        
+        // 确认删除并传递原因
+        function confirmDeleteWithReason() {
+            const reasonInput = document.getElementById('deleteReasonInput');
+            const errorDiv = document.getElementById('deleteReasonError');
+            
+            if (!reasonInput || !reasonInput.value.trim()) {
+                if (errorDiv) {
+                    errorDiv.style.display = 'block';
+                }
+                if (reasonInput) {
+                    reasonInput.style.borderColor = '#dc3545';
+                    reasonInput.focus();
+                }
+                return;
+            }
+            
+            const deleteReason = reasonInput.value.trim();
+            
+            if (window.currentDeleteCallback) {
+                window.currentDeleteCallback(deleteReason);
+            }
+            
+            closeDeleteReasonModal();
+        }
+
+        // 删除待审核的请求
+        function deletePendingRequest(requestId) {
+            const request = requests.find(r => r.id === requestId);
+            if (!request) {
+                showTemporaryMessage('❌ 未找到要删除的请求', 'error');
+                return;
+            }
+            
+            // 创建临时事件对象用于弹窗显示
+            const tempEvent = {
+                date: request.sendDate,
+                arc: request.arc,
+                cohort: request.cohort,
+                title: `${request.arc}-${request.cohort}: ${request.content.substring(0, 30)}...`,
+                content: request.content
+            };
+            
+            // 显示删除原因输入弹窗
+            showDeleteReasonModal(tempEvent, (deleteReason) => {
+                // 执行删除操作
+                const requestIndex = requests.findIndex(r => r.id === requestId);
+                if (requestIndex !== -1) {
+                    // 标记为已删除而不是直接移除，保留审核记录
+                    requests[requestIndex].status = 'deleted';
+                    requests[requestIndex].deleteTime = new Date().toLocaleString('zh-CN');
+                    requests[requestIndex].deleteReason = deleteReason;
+                    
+                    // 更新本地存储
+                    localStorage.setItem('massRequests', JSON.stringify(requests));
+                    
+                    // 重新生成日历和更新管理员页面
+                    generateCalendar();
+                    if (document.getElementById('admin').classList.contains('active')) {
+                        loadPendingRequests();
+                    }
+                    
+                    showTemporaryMessage('✅ 待审核请求已删除', 'success');
+                }
+            });
+        }
+
+        // 显示确认模态框
+        function showConfirmModal(title, content, onConfirm) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); z-index: 10001; display: flex;
+                align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 15px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                    <div style="background: linear-gradient(135deg, #dc3545, #c82333); color: white; padding: 20px; border-radius: 15px 15px 0 0;">
+                        <h3 style="margin: 0; font-size: 1.3rem;">${title}</h3>
+                    </div>
+                    <div style="padding: 25px;">
+                        ${content}
+                        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                            <button onclick="this.closest('.confirm-modal').remove()" 
+                                    style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                取消
+                            </button>
+                            <button id="confirmDeleteBtn"
+                                    style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                确认删除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.className = 'confirm-modal';
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
+            
+            // 绑定确认按钮事件
+            modal.querySelector('#confirmDeleteBtn').onclick = () => {
+                modal.remove();
+                onConfirm();
+            };
+            
+            document.body.appendChild(modal);
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+        // 调试函数
+        function debugDateHandling() {
+            console.log('=== 日期处理调试 ===');
+            
+            // 测试今天的日期
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+            
+            console.log('今天的日期:', today);
+            console.log('格式化后:', todayStr);
+            
+            // 测试 openSubmitModal
+            console.log('测试 openSubmitModal...');
+            openSubmitModal(todayStr);
+            
+            setTimeout(() => {
+                const formValue = document.getElementById('sendDate').value;
+                console.log('表单中的值:', formValue);
+                console.log('是否匹配:', todayStr === formValue ? '✅' : '❌');
+                closeSubmitModal();
+            }, 100);
+        }
+
+        // 添加键盘快捷键用于调试
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                debugDateHandling();
+            }
+        });
+
+        console.log('调试提示: 按 Ctrl+Shift+D 进行日期处理调试');
+    </script>
+</body>
+</html>
